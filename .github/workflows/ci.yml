@@ -1,0 +1,54 @@
+name: Firecrawl Hybrid CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-and-smoke:
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, windows-latest ]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+          cache-dependency-path: go-engine/go.sum
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Vet and build go-engine
+        working-directory: go-engine
+        run: |
+          go vet ./...
+          go build -ldflags="-s -w" -o go-engine${{ runner.os == 'Windows' && '.exe' || '' }} .
+
+      - name: Build rust-core release
+        working-directory: rust-core
+        run: cargo build --release
+
+      - name: Live health & RAM smoke check (Linux)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          ./go-engine/go-engine &
+          GO_PID=$!
+          ./rust-core/target/release/firecrawl-rs &
+          RS_PID=$!
+          trap "kill $GO_PID $RS_PID 2>/dev/null || true" EXIT
+          sleep 2
+          curl -fsS http://127.0.0.1:8081/health
+          echo ""
+          curl -fsS http://127.0.0.1:3002/health
+          echo ""
+          ps -o pid,rss,comm -p $GO_PID,$RS_PID

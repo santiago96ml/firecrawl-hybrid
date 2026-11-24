@@ -1,0 +1,11 @@
+.env
+.env.*
+!.env.example
+target/
+rust-core/target/
+*.exe
+go-engine/go-engine
+!*.ps1
+!*.bat
+.DS_Store
+Thumbs.db

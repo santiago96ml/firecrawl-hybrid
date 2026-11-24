@@ -1,0 +1,27 @@
+[package]
+name = "firecrawl-rs"
+version = "2.0.0"
+edition = "2021"
+description = "High-performance hybrid Rust Core API, Async BFS Crawler, Sitemap Mapper, and NVIDIA NIM AI Agent for Firecrawl"
+authors = ["Firecrawl Hybrid Team"]
+
+[dependencies]
+axum = "0.7"
+tokio = { version = "1", features = ["full"] }
+tower-http = { version = "0.5", features = ["cors", "limit", "trace"] }
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls", "gzip"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+dashmap = "6.0"
+uuid = { version = "1.10", features = ["v4", "serde"] }
+url = "2.5"
+regex = "1.11"
+dotenvy = "0.15"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+chrono = { version = "0.4", features = ["serde"] }
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+strip = true

@@ -1,0 +1,38 @@
+services:
+  go-engine:
+    build: ./go-engine
+    container_name: firecrawl-go-engine
+    environment:
+      PORT: "8081"
+      ENV: "production"
+    ports:
+      - "8081:8081"
+    networks:
+      - firecrawl-net
+    cpus: 1.0
+    mem_limit: 128M
+    restart: unless-stopped
+
+  rust-core:
+    build: ./rust-core
+    container_name: firecrawl-rust-core
+    environment:
+      PORT: "3002"
+      GO_ENGINE_URL: "http://go-engine:8081"
+      OPENAI_API_KEY: "${OPENAI_API_KEY}"
+      OPENAI_BASE_URL: "${OPENAI_BASE_URL:-https://integrate.api.nvidia.com/v1}"
+      MODEL_NAME: "${MODEL_NAME:-nvidia/nemotron-3-nano-30b}"
+      TEST_API_KEY: "${TEST_API_KEY}"
+    ports:
+      - "3002:3002"
+    depends_on:
+      - go-engine
+    networks:
+      - firecrawl-net
+    cpus: 1.0
+    mem_limit: 256M
+    restart: unless-stopped
+
+networks:
+  firecrawl-net:
+    driver: bridge
